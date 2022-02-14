@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+::after,
+::before {
+	box-sizing: border-box;
+}
+body {
+	padding: 0;
+	margin: 0;
+	font-family: 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+	font-weight: normal;
+	line-height: 1;
+	color: #0a0a0a;
+	background: #fefefe;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+label,
+p,
+span,
+a,
+button,
+input {
+	line-height: 1;
+	font-family: 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+}

@@ -50,7 +50,7 @@ const firstSundayOfTheYear = setDay(
 	{ weekStartsOn: getDay(startOfYear(new Date())) },
 )
 
-export default function ADPCalculator() {
+export default function PTOCalculator() {
 	const [initialStartDate, setInitialStartDate] = useState<Date>(firstSundayOfTheYear)
 	const [initialPTO, setInitialPTO] = useState(0)
 	const [payPeriodCount, setPayPeriodCount] = useState(26)
@@ -106,7 +106,7 @@ export default function ADPCalculator() {
 
 	return (
 		<div className='p-6'>
-			<h1 className='text-primary font-bold text-3xl mb-1 text-center'>PTO Tracker</h1>
+			<h1 className='text-primary font-bold text-3xl mb-1 text-center'>PTO Calculator</h1>
 			<p className='text-center mb-3 leading-6'>
 				Sometimes its helpful to have a quick tool to think about PTO.
 				<br />
@@ -115,7 +115,7 @@ export default function ADPCalculator() {
 			<div>
 				<DatetimeRow
 					labelForKey='startDate'
-					title='Start Date'
+					title='Start of First Pay Period'
 					value={initialStartDate}
 					onChange={(d) => {
 						const val = d ?? firstSundayOfTheYear
@@ -157,7 +157,7 @@ export default function ADPCalculator() {
 				<InputRow
 					type='number'
 					labelForKey='payPeriodCount'
-					title='Number of pay periods'
+					title='Number of Pay periods'
 					value={payPeriodCount}
 					onChange={(e) => {
 						const val = e.target.valueAsNumber

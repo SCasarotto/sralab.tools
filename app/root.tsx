@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => {
 
 const NavBarLinkArray = [
 	{ to: '/adp-calculator', label: 'ADP Calculator' },
-	{ to: '/pto-tracker', label: 'PTO Tracker' },
+	{ to: '/pto-calculator', label: 'PTO Calculator' },
 ]
 
 export default function App() {
