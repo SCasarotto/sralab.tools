@@ -1,7 +1,7 @@
 {
 	"private": true,
-	"name": "remix-app-template",
-	"description": "",
+	"name": "sralabs.tools",
+	"description": "collection of helpful tools to save SRALabs employees time",
 	"license": "MIT",
 	"scripts": {
 		"build": "yarn build:css && remix build",
