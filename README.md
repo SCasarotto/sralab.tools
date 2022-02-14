@@ -1,6 +1,6 @@
-# SRALabs Tools
+# SRALab Tools
 
-[sralabs.tools](https://www.sralabs.tools/) is a collection of helpful tools to save SRALabs employees time. Please report any bugs or feature requests in the [issues tab](https://github.com/SCasarotto/sralabs.tools/issues).
+[sralab.tools](https://www.sralab.tools/) is a collection of helpful tools to save SRALab employees time. Please report any bugs or feature requests in the [issues tab](https://github.com/SCasarotto/sralab.tools/issues).
 
 ## Deployment
 
