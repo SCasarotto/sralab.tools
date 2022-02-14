@@ -70,8 +70,8 @@ export default function PTOCalculator() {
 		cell: (data: PayPeriod, index: number) => ReactNode
 	}> = useMemo(
 		() => [
-			{ header: 'Start Pay Period Date', cell: (d) => format(d.start, 'MM/dd/yyyy') },
-			{ header: 'End Pay Period Date', cell: (d) => format(d.end, 'MM/dd/yyyy') },
+			{ header: 'Start of Pay Period', cell: (d) => format(d.start, 'MM/dd/yyyy') },
+			{ header: 'End of Pay Period', cell: (d) => format(d.end, 'MM/dd/yyyy') },
 			{
 				header: 'PTO Spend',
 				cell: (d, i) => (
