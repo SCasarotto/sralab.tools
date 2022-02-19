@@ -5,7 +5,11 @@ import styles from './styles/app.css'
 import { ThemeProvider } from 'react-tec'
 
 export function links() {
-	return [{ rel: 'stylesheet', href: styles }]
+	return [
+		{ rel: 'stylesheet', href: styles },
+		// Google Analytics
+		{ rel: 'script', href: 'https://www.googletagmanager.com/gtag/js?id=G-QF8YDWB3DB' },
+	]
 }
 
 export const meta: MetaFunction = () => {
@@ -25,6 +29,18 @@ export default function App() {
 				<meta name='viewport' content='width=device-width,initial-scale=1' />
 				<Meta />
 				<Links />
+				{/* Google Analytics */}
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
+							window.dataLayer = window.dataLayer || [];
+							function gtag(){dataLayer.push(arguments);}
+							gtag('js', new Date());
+
+							gtag('config', 'G-QF8YDWB3DB');
+						`,
+					}}
+				/>
 			</head>
 			<body>
 				{/* TODO: Separate this out into its own navbar component */}
