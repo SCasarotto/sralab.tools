@@ -1,6 +1,6 @@
 import { addWeeks, format, getDay, setDay, startOfYear, subDays } from 'date-fns'
 import { ReactNode, useMemo, useState } from 'react'
-import { DatetimeRow, Input, InputRow } from 'react-tec'
+import { DatetimeRow, Input, InputRow, SelectRow } from 'react-tec'
 
 type PayPeriod = {
 	start: Date
@@ -50,11 +50,37 @@ const firstSundayOfTheYear = setDay(
 	{ weekStartsOn: getDay(startOfYear(new Date())) },
 )
 
+const classifications = {
+	staff: {
+		name: 'Staff',
+		value: 'staff',
+		yearsOfService: [
+			{ min: 0, max: 3, accrualRate: 7.69 },
+			{ min: 4, max: Infinity, accrualRate: 9.23 },
+		],
+	},
+	'physicians-department-heads-and-above': {
+		name: 'Physicians, Department Heads, and Above',
+		value: 'physicians-department-heads-and-above',
+		yearsOfService: [{ min: 0, max: Infinity, accrualRate: 9.23 }],
+	},
+}
+const classificationOptions = Object.values(classifications)
+
 export default function PTOCalculator() {
 	const [initialStartDate, setInitialStartDate] = useState<Date>(firstSundayOfTheYear)
 	const [initialPTO, setInitialPTO] = useState(0)
 	const [payPeriodCount, setPayPeriodCount] = useState(26)
-	const [ptoGainPerPayPeriod, setPtoGainPerPayPeriod] = useState(7.69)
+	const [classification, setClassification] = useState<keyof typeof classifications>('staff')
+	const [yearsOfService, setYearsOfService] = useState(1)
+
+	const ptoGainPerPayPeriod = useMemo(
+		() =>
+			classifications[classification]?.yearsOfService.find(
+				(y) => y.min <= yearsOfService && yearsOfService <= y.max,
+			)?.accrualRate ?? 0,
+		[classification, yearsOfService],
+	)
 	const [payPeriodArray, setPayPeriodArray] = useState<Array<PayPeriod>>(
 		recalculatePayPeriod({
 			startDate: initialStartDate,
@@ -97,7 +123,7 @@ export default function PTOCalculator() {
 				),
 			},
 			{
-				header: 'PTO Balance',
+				header: `PTO Balance (+${ptoGainPerPayPeriod})`,
 				cell: (d) => Math.round(d.balance * 100) / 100,
 			},
 		],
@@ -112,7 +138,7 @@ export default function PTOCalculator() {
 				<br />
 				Spend the time that this saves you to do a nice thing for someone.
 			</p>
-			<div>
+			<div className='flex'>
 				<DatetimeRow
 					labelForKey='startDate'
 					title='Start of First Pay Period'
@@ -131,7 +157,8 @@ export default function PTOCalculator() {
 						)
 					}}
 					isClearable={false}
-					rowSize='forth'
+					rowSize='condensed'
+					className='flex-1'
 				/>
 				<InputRow
 					type='number'
@@ -151,8 +178,9 @@ export default function PTOCalculator() {
 							}),
 						)
 					}}
-					rowSize='forth'
+					rowSize='condensed'
 					min={0}
+					className='flex-1'
 				/>
 				<InputRow
 					type='number'
@@ -172,32 +200,67 @@ export default function PTOCalculator() {
 							}),
 						)
 					}}
-					rowSize='forth'
+					rowSize='condensed'
 					min={1}
 					max={100}
+					className='flex-1'
 				/>
-				<InputRow
-					type='number'
-					labelForKey='ptoGainPerPayPeriod'
-					title='PTO Gain Per Pay Period'
-					value={ptoGainPerPayPeriod}
-					onChange={(e) => {
-						const val = e.target.valueAsNumber
-						setPtoGainPerPayPeriod(val)
+				<SelectRow
+					labelForKey='classification'
+					title='Classification'
+					value={classifications[classification]}
+					options={classificationOptions}
+					onChange={(selection) => {
+						const newClassification =
+							(selection?.value as keyof typeof classifications | undefined) ??
+							'staff'
+						setClassification(newClassification)
+						const ptoGainPerPayPeriod =
+							classifications[newClassification]?.yearsOfService.find(
+								(y) => y.min <= yearsOfService && yearsOfService <= y.max,
+							)?.accrualRate ?? 0
 						setPayPeriodArray((prev) =>
 							recalculatePayPeriod({
 								startDate: initialStartDate,
 								startingPTO: initialPTO,
 								payPeriodCount,
-								ptoGainPerPayPeriod: val,
+								ptoGainPerPayPeriod,
 								prevPayPeriodArray: prev,
 							}),
 						)
 					}}
-					rowSize='forth'
+					getOptionValue={(option) => option.value}
+					getOptionLabel={(option) => option.name}
+					rowSize='condensed'
+					className='flex-1'
+				/>
+				<InputRow
+					type='number'
+					labelForKey='yearsOfService'
+					title='Years of Service'
+					value={yearsOfService}
+					onChange={(e) => {
+						const val = e.target.valueAsNumber
+						setYearsOfService(val)
+						const ptoGainPerPayPeriod =
+							classifications[classification]?.yearsOfService.find(
+								(y) => y.min <= val && val <= y.max,
+							)?.accrualRate ?? 0
+						setPayPeriodArray((prev) =>
+							recalculatePayPeriod({
+								startDate: initialStartDate,
+								startingPTO: initialPTO,
+								payPeriodCount,
+								ptoGainPerPayPeriod,
+								prevPayPeriodArray: prev,
+							}),
+						)
+					}}
+					rowSize='condensed'
 					last
 					min={0}
-					max={80}
+					step={1}
+					className='flex-1'
 				/>
 			</div>
 			<table className='border-collapse w-full text-left'>
