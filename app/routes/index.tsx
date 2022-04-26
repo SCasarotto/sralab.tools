@@ -1,7 +1,9 @@
 export default function Index() {
 	return (
 		<div className='max-w-prose mx-auto mt-12 text-center'>
-			<h1 className='text-3xl text-primary font-semibold mb-4'>Welcome to SRALab Tools</h1>
+			<h1 className='text-3xl text-brand-orange-500 font-semibold mb-4'>
+				Welcome to SRALab Tools
+			</h1>
 			<p className='leading-relaxed text-lg mb-4'>
 				I hope these tools save you some time. 😊
 			</p>

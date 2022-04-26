@@ -1,6 +1,23 @@
+import type { ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
+import { Form, useFormState, useSelectState } from 'ariakit'
 import { addWeeks, format, getDay, setDay, startOfYear, subDays } from 'date-fns'
-import { ReactNode, useMemo, useState } from 'react'
-import { DatetimeRow, Input, InputRow, SelectRow } from 'react-tec'
+
+import { DatePicker } from '~/components/DatePicker'
+import { Input } from '~/components/Input'
+import { InputError } from '~/components/InputError'
+import { InputRow } from '~/components/InputRow'
+import { InputWrapper } from '~/components/InputWrapper'
+import { Label } from '~/components/Label'
+import { Select } from '~/components/Select'
+import { SelectItem } from '~/components/SelectItem'
+import { SelectLabel } from '~/components/SelectLabel'
+import { SelectPopover } from '~/components/SelectPopover'
+import { Table } from '~/components/Table'
+import { Td } from '~/components/Td'
+import { Th } from '~/components/Th'
+import { Tr } from '~/components/Tr'
 
 type PayPeriod = {
 	start: Date
@@ -10,7 +27,7 @@ type PayPeriod = {
 }
 
 type RecalculatePayPeriodData = {
-	startDate: Date
+	startDate: number
 	startingPTO: number
 	payPeriodCount: number
 	ptoGainPerPayPeriod: number
@@ -19,9 +36,9 @@ type RecalculatePayPeriodData = {
 const recalculatePayPeriod = (d: RecalculatePayPeriodData) => {
 	const { startDate, startingPTO, payPeriodCount, ptoGainPerPayPeriod, prevPayPeriodArray } = d
 
-	const initialPTO = isNaN(startingPTO) ? 0 : startingPTO
-	const periodCount = isNaN(payPeriodCount) ? 0 : payPeriodCount
-	const ptoGain = isNaN(ptoGainPerPayPeriod) ? 0 : ptoGainPerPayPeriod
+	const initialPTO = startingPTO || 0
+	const periodCount = payPeriodCount || 0
+	const ptoGain = ptoGainPerPayPeriod || 0
 
 	const newPayPeriodArray: Array<PayPeriod> = []
 	for (let i = 0; i < periodCount; i++) {
@@ -29,7 +46,7 @@ const recalculatePayPeriod = (d: RecalculatePayPeriodData) => {
 		const start = addWeeks(startDate, 2 * i)
 		const end = subDays(addWeeks(start, 2), 1)
 		// gotta be careful because the number of pay perios could be larger than the previous array
-		const spend = prevPayPeriodArray?.[i]?.spend ?? 0
+		const spend = prevPayPeriodArray?.[i]?.spend || 0
 		// Use initialPTO if this is the first pay period
 		// Otherwise use the previous pay period's balance
 		const balance = (i === 0 ? initialPTO : newPayPeriodArray[i - 1].balance + ptoGain) - spend
@@ -51,45 +68,77 @@ const firstSundayOfTheYear = setDay(
 )
 
 const classifications = {
-	staff: {
-		name: 'Staff',
-		value: 'staff',
+	Staff: {
+		value: 'Staff',
 		yearsOfService: [
 			{ min: 0, max: 3, accrualRate: 7.69 },
 			{ min: 4, max: Infinity, accrualRate: 9.23 },
 		],
 	},
-	'physicians-department-heads-and-above': {
-		name: 'Physicians, Department Heads, and Above',
-		value: 'physicians-department-heads-and-above',
+	'Physicians, Department Heads, and Above': {
+		value: 'Physicians, Department Heads, and Above',
 		yearsOfService: [{ min: 0, max: Infinity, accrualRate: 9.23 }],
 	},
 }
+type Classification = keyof typeof classifications
 const classificationOptions = Object.values(classifications)
 
 export default function PTOCalculator() {
-	const [initialStartDate, setInitialStartDate] = useState<Date>(firstSundayOfTheYear)
-	const [initialPTO, setInitialPTO] = useState(0)
-	const [payPeriodCount, setPayPeriodCount] = useState(26)
-	const [classification, setClassification] = useState<keyof typeof classifications>('staff')
-	const [yearsOfService, setYearsOfService] = useState(1)
+	const form = useFormState<{
+		initialStartDate: number
+		initialPTO: number
+		payPeriodCount: number
+		classification: Classification
+		yearsOfService: number
+	}>({
+		defaultValues: {
+			initialStartDate: firstSundayOfTheYear.getTime(),
+			initialPTO: 0,
+			payPeriodCount: 26,
+			classification: 'Staff',
+			yearsOfService: 1,
+		},
+	})
+	const classificationSelectState = useSelectState<Classification>({
+		value: form.values.classification,
+		setValue: (value) => form.setValue(form.names.classification, value as Classification),
+		gutter: 4,
+		sameWidth: true,
+	})
 
 	const ptoGainPerPayPeriod = useMemo(
 		() =>
-			classifications[classification]?.yearsOfService.find(
-				(y) => y.min <= yearsOfService && yearsOfService <= y.max,
+			classifications[form.values.classification]?.yearsOfService.find(
+				(y) => y.min <= form.values.yearsOfService && form.values.yearsOfService <= y.max,
 			)?.accrualRate ?? 0,
-		[classification, yearsOfService],
+		[form.values.classification, form.values.yearsOfService],
 	)
 	const [payPeriodArray, setPayPeriodArray] = useState<Array<PayPeriod>>(
 		recalculatePayPeriod({
-			startDate: initialStartDate,
-			startingPTO: initialPTO,
-			payPeriodCount,
+			startDate: form.values.initialStartDate,
+			startingPTO: form.values.initialPTO,
+			payPeriodCount: form.values.payPeriodCount,
 			ptoGainPerPayPeriod,
 			prevPayPeriodArray: [],
 		}),
 	)
+
+	useEffect(() => {
+		setPayPeriodArray((prev) => {
+			return recalculatePayPeriod({
+				startDate: form.values.initialStartDate,
+				startingPTO: form.values.initialPTO,
+				payPeriodCount: form.values.payPeriodCount,
+				ptoGainPerPayPeriod,
+				prevPayPeriodArray: prev,
+			})
+		})
+	}, [
+		form.values.initialStartDate,
+		form.values.initialPTO,
+		form.values.payPeriodCount,
+		ptoGainPerPayPeriod,
+	])
 
 	const tableConfig: Array<{
 		header: string
@@ -105,186 +154,152 @@ export default function PTOCalculator() {
 						name='ptoSpend'
 						type='number'
 						onChange={(e) => {
-							const spend = e.target.valueAsNumber ?? 0
+							const spend = e.target.valueAsNumber
 							setPayPeriodArray((prev) => {
-								const prevPayPeriodArray = [...prev]
-								prevPayPeriodArray[i].spend = spend
+								// Its okay to mutate because recalculatePayPeriod immutably modifies the array
+								prev[i].spend = spend
 								return recalculatePayPeriod({
-									startDate: initialStartDate,
-									startingPTO: initialPTO,
-									payPeriodCount,
+									startDate: form.values.initialStartDate,
+									startingPTO: form.values.initialPTO,
+									payPeriodCount: form.values.payPeriodCount,
 									ptoGainPerPayPeriod,
-									prevPayPeriodArray,
+									prevPayPeriodArray: prev,
 								})
 							})
 						}}
-						value={d.spend ?? 0}
+						value={d.spend || 0}
 					/>
 				),
 			},
 			{
 				header: `PTO Balance (+${ptoGainPerPayPeriod})`,
-				cell: (d) => Math.round(d.balance * 100) / 100,
+				cell: (d) => {
+					const val = Math.round(d.balance * 100) / 100
+					const className = val >= 0 ? '' : 'text-red-500'
+					return <span className={className}>{val}</span>
+				},
 			},
 		],
-		[payPeriodCount, ptoGainPerPayPeriod, payPeriodArray, initialStartDate, initialPTO],
+		[
+			form.values.payPeriodCount,
+			ptoGainPerPayPeriod,
+			form.values.initialStartDate,
+			form.values.initialPTO,
+		],
 	)
 
 	return (
 		<div className='p-6'>
-			<h1 className='text-primary font-bold text-3xl mb-1 text-center'>PTO Calculator</h1>
+			<h1 className='text-brand-orange-500 font-bold text-3xl mb-1 text-center'>
+				PTO Calculator
+			</h1>
 			<p className='text-center mb-3 leading-6'>
 				Sometimes its helpful to have a quick tool to think about PTO.
 				<br />
 				Spend the time that this saves you to do a nice thing for someone.
 			</p>
-			<div className='flex'>
-				<DatetimeRow
-					labelForKey='startDate'
-					title='Start of First Pay Period'
-					value={initialStartDate}
-					onChange={(d) => {
-						const val = d ?? firstSundayOfTheYear
-						setInitialStartDate(val)
-						setPayPeriodArray((prev) =>
-							recalculatePayPeriod({
-								startDate: val,
-								startingPTO: initialPTO,
-								payPeriodCount,
-								ptoGainPerPayPeriod,
-								prevPayPeriodArray: prev,
-							}),
-						)
-					}}
-					isClearable={false}
-					rowSize='condensed'
-					className='flex-1'
-				/>
-				<InputRow
-					type='number'
-					labelForKey='initialPTO'
-					title='Initial PTO'
-					value={initialPTO}
-					onChange={(e) => {
-						const val = e.target.valueAsNumber
-						setInitialPTO(val)
-						setPayPeriodArray((prev) =>
-							recalculatePayPeriod({
-								startDate: initialStartDate,
-								startingPTO: val,
-								payPeriodCount,
-								ptoGainPerPayPeriod,
-								prevPayPeriodArray: prev,
-							}),
-						)
-					}}
-					rowSize='condensed'
-					min={0}
-					className='flex-1'
-				/>
-				<InputRow
-					type='number'
-					labelForKey='payPeriodCount'
-					title='Number of Pay periods'
-					value={payPeriodCount}
-					onChange={(e) => {
-						const val = e.target.valueAsNumber
-						setPayPeriodCount(val)
-						setPayPeriodArray((prev) =>
-							recalculatePayPeriod({
-								startDate: initialStartDate,
-								startingPTO: initialPTO,
-								payPeriodCount: val,
-								ptoGainPerPayPeriod,
-								prevPayPeriodArray: prev,
-							}),
-						)
-					}}
-					rowSize='condensed'
-					min={1}
-					max={100}
-					className='flex-1'
-				/>
-				<SelectRow
-					labelForKey='classification'
-					title='Classification'
-					value={classifications[classification]}
-					options={classificationOptions}
-					onChange={(selection) => {
-						const newClassification =
-							(selection?.value as keyof typeof classifications | undefined) ??
-							'staff'
-						setClassification(newClassification)
-						const ptoGainPerPayPeriod =
-							classifications[newClassification]?.yearsOfService.find(
-								(y) => y.min <= yearsOfService && yearsOfService <= y.max,
-							)?.accrualRate ?? 0
-						setPayPeriodArray((prev) =>
-							recalculatePayPeriod({
-								startDate: initialStartDate,
-								startingPTO: initialPTO,
-								payPeriodCount,
-								ptoGainPerPayPeriod,
-								prevPayPeriodArray: prev,
-							}),
-						)
-					}}
-					getOptionValue={(option) => option.value}
-					getOptionLabel={(option) => option.name}
-					rowSize='condensed'
-					className='flex-1'
-				/>
-				<InputRow
-					type='number'
-					labelForKey='yearsOfService'
-					title='Years of Service'
-					value={yearsOfService}
-					onChange={(e) => {
-						const val = e.target.valueAsNumber
-						setYearsOfService(val)
-						const ptoGainPerPayPeriod =
-							classifications[classification]?.yearsOfService.find(
-								(y) => y.min <= val && val <= y.max,
-							)?.accrualRate ?? 0
-						setPayPeriodArray((prev) =>
-							recalculatePayPeriod({
-								startDate: initialStartDate,
-								startingPTO: initialPTO,
-								payPeriodCount,
-								ptoGainPerPayPeriod,
-								prevPayPeriodArray: prev,
-							}),
-						)
-					}}
-					rowSize='condensed'
-					last
-					min={0}
-					step={1}
-					className='flex-1'
-				/>
-			</div>
-			<table className='border-collapse w-full text-left'>
+			<Form state={form} resetOnSubmit={false}>
+				<InputRow>
+					<InputWrapper>
+						<Label name='initialStartDate' htmlFor='initialStartDate'>
+							Start of First Pay Period
+						</Label>
+						<DatePicker
+							id='initialStartDate'
+							name='initialStartDate'
+							selected={new Date(form.values.initialStartDate)}
+							onChange={(d) => {
+								const val = (d ?? firstSundayOfTheYear).getTime()
+								form.setValue(form.names.initialStartDate, val)
+								setPayPeriodArray((prev) =>
+									recalculatePayPeriod({
+										startDate: val,
+										startingPTO: form.values.initialPTO,
+										payPeriodCount: form.values.payPeriodCount,
+										ptoGainPerPayPeriod,
+										prevPayPeriodArray: prev,
+									}),
+								)
+							}}
+							isClearable={false}
+						/>
+						<InputError name={form.names.initialStartDate} />
+					</InputWrapper>
+					<InputWrapper>
+						<Label name={form.names.initialPTO}>Initail PTO</Label>
+						<Input name={form.names.initialPTO} type='number' min={0} />
+						<InputError name={form.names.initialPTO} />
+					</InputWrapper>
+					<InputWrapper>
+						<Label name={form.names.payPeriodCount}>Number of Pay periods</Label>
+						<Input name={form.names.payPeriodCount} type='number' min={1} max={100} />
+						<InputError name={form.names.payPeriodCount} />
+					</InputWrapper>
+					<InputWrapper>
+						<SelectLabel state={classificationSelectState}>Classification</SelectLabel>
+						<Select state={classificationSelectState} required />
+						<SelectPopover state={classificationSelectState}>
+							{classificationOptions.map((option) => (
+								<SelectItem key={option.value} value={option.value}>
+									{option.value}
+								</SelectItem>
+							))}
+						</SelectPopover>
+						<InputError name={form.names.classification} />
+					</InputWrapper>
+					{/* <SelectRow
+						labelForKey='classification'
+						title='Classification'
+						value={classifications[classification]}
+						options={classificationOptions}
+						onChange={(selection) => {
+							const newClassification =
+								(selection?.value as Classification | undefined) ?? 'staff'
+							setClassification(newClassification)
+							const ptoGainPerPayPeriod =
+								classifications[newClassification]?.yearsOfService.find(
+									(y) => y.min <= yearsOfService && yearsOfService <= y.max,
+								)?.accrualRate ?? 0
+							setPayPeriodArray((prev) =>
+								recalculatePayPeriod({
+									startDate: initialStartDate,
+									startingPTO: initialPTO,
+									payPeriodCount,
+									ptoGainPerPayPeriod,
+									prevPayPeriodArray: prev,
+								}),
+							)
+						}}
+						getOptionValue={(option) => option.value}
+						getOptionLabel={(option) => option.name}
+						rowSize='condensed'
+						className='flex-1'
+					/> */}
+					<InputWrapper>
+						<Label name={form.names.yearsOfService}>Years of Service</Label>
+						<Input name={form.names.yearsOfService} type='number' min={0} step={1} />
+						<InputError name={form.names.yearsOfService} />
+					</InputWrapper>
+				</InputRow>
+			</Form>
+			<Table>
 				<thead>
-					<tr>
+					<Tr variant='head'>
 						{tableConfig.map((config) => (
-							<th key={config.header} className='px-3 py-2 bg-primary text-white'>
-								{config.header}
-							</th>
+							<Th key={config.header}>{config.header}</Th>
 						))}
-					</tr>
+					</Tr>
 				</thead>
 				<tbody>
 					{payPeriodArray.map((d, i) => (
-						<tr key={i} className='even:bg-gray-100'>
+						<Tr key={i}>
 							{tableConfig.map((config) => (
-								<td key={config.header} className='p-2'>
-									{config.cell(d, i)}
-								</td>
+								<Td key={config.header}>{config.cell(d, i)}</Td>
 							))}
-						</tr>
+						</Tr>
 					))}
 				</tbody>
-			</table>
+			</Table>
 		</div>
 	)
 }

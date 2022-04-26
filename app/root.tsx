@@ -1,11 +1,14 @@
+import datepicker from 'react-datepicker/dist/react-datepicker.css'
 import { Links, LiveReload, Meta, NavLink, Outlet, Scripts, ScrollRestoration } from 'remix'
 import type { MetaFunction } from 'remix'
 
 import styles from './styles/app.css'
-import { ThemeProvider } from 'react-tec'
+import datepickerOverrides from './styles/react-datepicker-overrides.css'
 
 export function links() {
 	return [
+		{ rel: 'stylesheet', href: datepicker },
+		{ rel: 'stylesheet', href: datepickerOverrides },
 		{ rel: 'stylesheet', href: styles },
 		// Google Analytics
 		{ rel: 'script', href: 'https://www.googletagmanager.com/gtag/js?id=G-QF8YDWB3DB' },
@@ -44,7 +47,7 @@ export default function App() {
 			</head>
 			<body>
 				{/* TODO: Separate this out into its own navbar component */}
-				<nav className='bg-primary px-5 py-3 flex justify-between'>
+				<nav className='bg-brand-orange-500 px-5 py-3 flex justify-between'>
 					<NavLink to='/'>
 						<h1 className='text-white text-3xl font-bold'>SRALab Tools</h1>
 					</NavLink>
@@ -65,11 +68,7 @@ export default function App() {
 						))}
 					</ul>
 				</nav>
-				{/* Would love to remove react-tec from this project in favor of using tailwindcss */}
-				<ThemeProvider theme={{ primary: '#F26B21', secondary: '#EA1C2B' }}>
-					<Outlet />
-				</ThemeProvider>
-				{/* <footer className='bg-primary px-5 py-3 flex justify-center'></footer> */}
+				<Outlet />
 				<ScrollRestoration />
 				<Scripts />
 				{process.env.NODE_ENV === 'development' && <LiveReload />}
