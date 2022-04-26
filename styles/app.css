@@ -8,6 +8,7 @@
   -webkit-box-sizing:border-box;
   -moz-box-sizing:border-box;
   box-sizing:border-box;
+	outline-color: #F26B21;
 }
 body {
 	padding: 0;

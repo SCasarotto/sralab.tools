@@ -781,6 +781,7 @@ Ensure the default browser behavior of the `hidden` attribute.
 ::after,
 ::before {
   box-sizing:border-box;
+  outline-color: #F26B21;
 }
 
 body {

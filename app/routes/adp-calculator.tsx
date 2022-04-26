@@ -1,4 +1,4 @@
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Form, useFormState, useSelectState } from 'ariakit'
