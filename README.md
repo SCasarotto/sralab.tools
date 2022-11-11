@@ -2,6 +2,10 @@
 
 [sralab.tools](https://www.sralab.tools/) is a collection of helpful tools to save SRALab employees time. Please report any bugs or feature requests in the [issues tab](https://github.com/SCasarotto/sralab.tools/issues).
 
+## Disclaimer
+
+This code and tool is not associated with SRA Lab or any of its employees. It is provided as is, with no warranty or guarantee of any kind. Use at your own risk.
+
 ## Deployment
 
 After having run the `create-remix` command and selected "Vercel" as a deployment target, you only need to [import your Git repository](https://vercel.com/new) into Vercel, and it will be deployed.
